@@ -35,7 +35,7 @@ class Movies(db.Model):
 
   actor = db.relationship('Actors', secondary='link')
 
-  def __init__(self):
+  def __init__(self, title, release_date, rating):
     self.title = title
     self.release_date = release_date
     self.rating = rating
@@ -64,11 +64,11 @@ class Actors(db.Model):
 
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String, nullable=False)
-  age = db.Column(db.Integer, nullable=False)
+  age = db.Column(db.Integer)
 
   movie = db.relationship('Movies', secondary='link')
 
-  def __init__(self, type):
+  def __init__(self, name, age):
     self.name = name
     self.age = age
 
