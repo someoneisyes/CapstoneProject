@@ -20,6 +20,7 @@ from models import (
     db, 
     Movies, 
     Actors,
+    Link,
     db_drop_and_create_all
 )
 from auth import AuthError, requires_auth
@@ -36,7 +37,7 @@ def create_app(test_config=None):
     !! Running this funciton will add one
     '''
 
-    # db_drop_and_create_all()
+    #db_drop_and_create_all()
 
     migrate = Migrate(app, db)
     CORS(app)
@@ -55,6 +56,8 @@ def create_app(test_config=None):
     def temp():
         return 'hello world'
 
+    ## GET ENDPOINTS
+
     ##  movies GET endpoint
 
     @app.route('/movies')
@@ -68,11 +71,69 @@ def create_app(test_config=None):
             return jsonify({
                 'success': True,
                 'movies': format_movie,
-                'total_movies': len(movies)
+                'total_movies': len(movies),
             }), 200
         except:
             abort(422)
-    
+
+    @app.route('/movies/<int:movie_id>')
+    def get_movie_by_id(movie_id):
+        movie = Movies.query.get(movie_id)
+
+        #actors that starred in this movie.
+        actors = [movie.actors[actor].name for actor in range(len(movie.actors))]
+
+        if movie is None:
+            abort(404)
+        try:
+            return jsonify({
+                'success': True,
+                'details': movie.format(),
+                'actors': actors, 
+            }), 200
+        except:
+            abort(422)
+
+    ##  actors GET endpoint
+
+    @app.route('/actors')
+    def get_actors():
+        actors = Actors.query.order_by(Actors.id).all()
+        format_actor = [format_actor.format() for format_actor in actors]
+
+        if len(actors) == 0:
+            abort(404)
+        try:
+            return jsonify({
+                'success': True,
+                'movies': format_actor,
+                'total_actors': len(actors)
+            }), 200
+        except:
+            abort(422)
+
+    @app.route('/actors/<int:actor_id>')
+    def get_actor_by_id(actor_id):
+        actor = Actors.query.get(actor_id)
+
+        #movies that this actor starred in.
+        movies = [actor.movies[movie].title for movie in range(len(actor.movies))]
+        
+        if actor is None:
+            abort(404)
+        try:
+            return jsonify({
+                'success': True,
+                'details': actor.format(),
+                'movies': movies, 
+            }), 200
+        except:
+            abort(422)
+
+    ##  POST ENDPOINTS
+
+    ##  movies POST endpoint
+
     @app.route('/movies', methods=['POST'])
     @requires_auth('post:movies')
     def post_movies(token):
@@ -94,20 +155,84 @@ def create_app(test_config=None):
         except Exception as e:
             print(e)
             abort(422)
-    '''
-    @app.route('/categories/<int:category_id>/questions')
-    def trivia_questions_by_category(category_id):
-        category = Category.query.get(category_id)
-        questions = Question.query.filter_by(category=category_id).all()
-        current_questions = paginate_questions(request, questions)
 
-        return jsonify({
-            'success': True,
-            'category': category.type,
-            'questions': current_questions,
-            'total_questions': len(questions)
-        })
-    '''
+    ##  actors POST endpoint
+    
+    @app.route('/actors', methods=['POST'])
+    @requires_auth('post:actors')
+    def post_actors(token):
+        try:
+            data = request.get_json()
+            new_actor = Actors(
+                name = data.get('name'),
+                age = data.get('age')
+            )
+
+            new_actor.insert()
+
+            print('Actors: ' + new_actor.name)
+
+            return jsonify ({
+                'success': True
+            }), 200
+        except Exception as e:
+            print(e)
+            abort(422)
+
+    ##  PATCH ENDPOINTS
+
+    ##  movies PATCH endpoint
+
+    @app.route('/movies/<int:movie_id>', methods=['PATCH'])
+    @requires_auth('patch:movies')
+    def update_movie(token, movie_id):
+
+        movie = Movies.query.get(movie_id)
+        data = request.get_json()
+
+        if movie is None:
+            abort(404)
+
+        try:
+            movie.title = data.get('title', movie.title)
+            movie.release_date = data.get('release_date', movie.release_date)
+            movie.rating = data.get('rating', movie.rating)
+
+            movie.update()
+
+            return jsonify ({
+                'success': True
+            }), 200
+        except Exception as e:
+            print(e)
+            abort(422)
+
+    ##  actors PATCH endpoint
+
+    @app.route('/actors/<int:actor_id>', methods=['PATCH'])
+    @requires_auth('patch:actors')
+    def update_actor(token, actor_id):
+
+        actor = Actors.query.get(actor_id)
+        data = request.get_json()
+
+        if actor is None:
+            abort(404)
+
+        try:
+            actor.name = data.get('name', actor.name)
+            actor.age = data.get('age', actor.age)
+
+            actor.update()
+
+            return jsonify ({
+                'success': True
+            }), 200
+        except Exception as e:
+            print(e)
+            abort(422)
+
+    ##  Error handlers
 
     @app.errorhandler(401)
     def unauthorized(error):

@@ -1,5 +1,6 @@
 import os
 from sqlalchemy import Column, String, Integer, create_engine
+from sqlalchemy.orm import relationship, backref
 from flask_sqlalchemy import SQLAlchemy
 import json
 from datetime import datetime
@@ -33,7 +34,7 @@ class Movies(db.Model):
   release_date = db.Column(db.DateTime)
   rating = db.Column(db.Float)
 
-  actor = db.relationship('Actors', secondary='link')
+  actors = db.relationship('Actors', secondary='link')
 
   def __init__(self, title, release_date, rating):
     self.title = title
@@ -66,7 +67,7 @@ class Actors(db.Model):
   name = db.Column(db.String, nullable=False)
   age = db.Column(db.Integer)
 
-  movie = db.relationship('Movies', secondary='link')
+  movies = db.relationship('Movies', secondary='link')
 
   def __init__(self, name, age):
     self.name = name
@@ -87,11 +88,15 @@ class Actors(db.Model):
     return {
       'id': self.id,
       'name': self.name,
-      'age': self.age
+      'age': self.age,
     }
   
 class Link(db.Model):
   __tablename__ = 'link'
 
-  movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), primary_key=True)
-  actor_id = db.Column(db.Integer, db.ForeignKey('actors.id'), primary_key=True)
+  id = db.Column(db.Integer, primary_key=True)
+  movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'))
+  actor_id = db.Column(db.Integer, db.ForeignKey('actors.id'))
+
+  movie = relationship(Movies, backref=backref("link", cascade="all, delete-orphan"))
+  actor = relationship(Actors, backref=backref("link", cascade="all, delete-orphan"))
