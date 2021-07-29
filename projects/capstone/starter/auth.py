@@ -9,7 +9,8 @@ AUTH0_DOMAIN = 'narat-auth.eu.auth0.com'
 ALGORITHMS = ['RS256']
 API_AUDIENCE = 'capstone-api'
 
-## AuthError Exception
+# AuthError Exception
+
 
 class AuthError(Exception):
     def __init__(self, error, status_code):
@@ -17,7 +18,7 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
-## Auth Header
+# Auth Header
 
 class AuthError(Exception):
     def __init__(self, error, status_code):
@@ -26,7 +27,7 @@ class AuthError(Exception):
 
 
 def get_token_auth_header():
-    #Obtains the Access Token from the Authorization Header
+    # Obtains the Access Token from the Authorization Header
     auth = request.headers.get('Authorization', None)
     if not auth:
         raise AuthError({
@@ -56,6 +57,7 @@ def get_token_auth_header():
     token = parts[1]
     return token
 
+
 def check_permissions(permission, payload):
     if 'permissions' not in payload:
         raise AuthError({
@@ -69,6 +71,7 @@ def check_permissions(permission, payload):
             'description': 'Permission not found.'
         }, 403)
     return True
+
 
 def verify_decode_jwt(token):
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
@@ -119,9 +122,10 @@ def verify_decode_jwt(token):
                 'description': 'Unable to parse authentication token.'
             }, 400)
     raise AuthError({
-                'code': 'invalid_header',
+        'code': 'invalid_header',
                 'description': 'Unable to find the appropriate key.'
-            }, 400)
+    }, 400)
+
 
 def requires_auth(permission=''):
     def requires_auth_decorator(f):
@@ -130,7 +134,7 @@ def requires_auth(permission=''):
             token = get_token_auth_header()
             try:
                 payload = verify_decode_jwt(token)
-            except:
+            except BaseException:
                 abort(401)
 
             check_permissions(permission, payload)
@@ -140,4 +144,3 @@ def requires_auth(permission=''):
         return wrapper
 
     return requires_auth_decorator
-

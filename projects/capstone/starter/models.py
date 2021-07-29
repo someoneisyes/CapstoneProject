@@ -14,17 +14,17 @@ db = SQLAlchemy()
 #setup
 
 def setup_db(app, database_path=database_path):
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_path
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.app = app
-    db.init_app(app)
-    db.create_all()
+  app.config["SQLALCHEMY_DATABASE_URI"] = database_path
+  app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+  db.app = app
+  db.init_app(app)
+  db.create_all()
 
 ##  the below function can be use to reset and start with new tables
 
 def db_drop_and_create_all():
-    db.drop_all()
-    db.create_all()
+  db.drop_all()
+  db.create_all()
 
 class Movies(db.Model):  
   __tablename__ = 'movies'
@@ -66,12 +66,14 @@ class Actors(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String, nullable=False)
   age = db.Column(db.Integer)
+  gender = db.Column(db.String)
 
   movies = db.relationship('Movies', secondary='link')
 
-  def __init__(self, name, age):
+  def __init__(self, name, age, gender):
     self.name = name
     self.age = age
+    self.gender = gender
 
   def insert(self):
     db.session.add(self)
@@ -89,6 +91,7 @@ class Actors(db.Model):
       'id': self.id,
       'name': self.name,
       'age': self.age,
+      'gender': self.gender
     }
   
 class Link(db.Model):
